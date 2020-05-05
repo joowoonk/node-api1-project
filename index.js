@@ -6,7 +6,7 @@ server.use(express.json());
 
 const shortid = require("shortid");
 
-const users = [
+let users = [
   {
     id: shortid.generate(),
     name: "Bruce Wayne",
@@ -30,7 +30,7 @@ server.get("/api/users", (req, res) => {
 server.post("/api/users", function (req, res) {
   let userInformation = req.body;
   userInformation.id = shortid.generate();
-  console.log(userInformation.bio, userInformation.name);
+  //   console.log(userInformation.bio, userInformation.name);
   if (
     userInformation.bio === undefined ||
     userInformation.name === undefined ||
@@ -46,31 +46,77 @@ server.post("/api/users", function (req, res) {
   }
 });
 
-// When the client makes a GET request to /api/users/:id:
-
-// If the user with the specified id is not found:
-
-// respond with HTTP status code 404 (Not Found).
-// return the following JSON object: { message: "The user with the specified ID does not exist." }.
-// If there's an error in retrieving the user from the database:
-
-// respond with HTTP status code 500.
-// return the following JSON object: { errorMessage: "The user information could not be retrieved." }.
-
 server.get("/api/users/:id", (req, res) => {
   const id = req.params.id;
   let searchById = users.find((person) => person.id == id);
   if (searchById) {
     res.status(200).json(searchById);
   } else if (!searchById) {
-    res.status(404).json({ Error: "The user by id doesn not exist" });
+    res
+      .status(404)
+      .json({ Error: "The user with the specified ID does not exist." });
   } else {
-    res.status(500).json({ Error: "The user info cannot be retrieved" });
+    res
+      .status(500)
+      .json({ Error: "The user information could not be retrieved." });
   }
-  //   console.log(searchById);
-  //   res.status(200).json(searchById);
 });
 
+server.delete("/api/users/:id", (req, res) => {
+  const id = req.params.id;
+
+  let eachId = users.filter((person) => person.id === id);
+  //   console.log(eachId);
+  //   console.log(id);
+
+  if (eachId.length === 0) {
+    res
+      .status(404)
+      .json({ Error: "The user with the specified ID does not exist." });
+  } else if (!users) {
+    res
+      .status(500)
+      .json({ Error: "The user information could not be retrieved." });
+  } else {
+    users = users.filter((person) => person.id != id);
+    res.status(200).json(users);
+  }
+});
+
+server.patch("/api/users/:id", (req, res) => {
+  const id = req.params.id;
+  let userInformation = req.body;
+
+  let checkid = users.filter((person) => person.id === id);
+  if (checkid.length === 0) {
+    res
+      .status(404)
+      .json({ message: "The user with the specified ID does not exist." });
+  } else if (
+    userInformation.bio === undefined ||
+    userInformation.name === undefined ||
+    userInformation.bio === "" ||
+    userInformation.name === ""
+  ) {
+    res
+      .status(400)
+      .json({ errorMessage: "Please provide name and bio for the user." });
+  } else if (!users) {
+    res
+      .status(500)
+      .json({ errorMessage: "The user information could not be modified." });
+  } else {
+    users.forEach((person) => {
+      if (person.id === id) {
+        person.name = userInformation.name;
+        person.bio = userInformation.bio;
+      } else {
+        return person;
+      }
+    });
+    res.status(200).json(users);
+  }
+});
 //foreach for patch within in it else if. if user has id that matched, then person.name = user.name and person.bio = user.bio
 
 server.listen(8000, () => console.log("API is up boit!"));
